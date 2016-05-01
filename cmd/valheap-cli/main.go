@@ -32,10 +32,13 @@ var knownCommand map[string]func(string)
 
 func init() {
 	knownCommand = map[string]func(string){
-		"init":   Get, // yeah yeah
-		"get":    Get,
-		"put":    Put,
-		"delete": Delete,
+		"init":    Get, // yeah yeah
+		"get":     Get,
+		"put":     Put,
+		"delete":  Delete,
+		"adduser": AddUser,
+		"rmuser":  RmUser,
+		"chgpwd":  Get, // dummy
 	}
 }
 
@@ -148,8 +151,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if os.Args[1] == "chgpwd" {
+		ChgPwd()
+		os.Exit(0)
+	}
 	if len(os.Args) != 3 {
-		fmt.Fprintf(os.Stderr, "%s expects exactly 1 argument in", os.Args[1])
+		fmt.Fprintf(os.Stderr, "%s expects exactly 1 argument in\n", os.Args[1])
+		os.Exit(1)
 	}
 	knownCommand[os.Args[1]](os.Args[2])
 }
