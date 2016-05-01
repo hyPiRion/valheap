@@ -14,6 +14,7 @@ const bcryptCost = 6
 var ErrDBCorrupted = errors.New("Unexpected error (database corrupted?)")
 var ErrForbiddenRoot = errors.New("Forbidden: Must be root (or the user itself) to do this")
 var ErrUserNotExists = errors.New("User does not exist")
+var ErrCannotDeleteRoot = errors.New("Cannot delete the root user")
 
 type User struct {
 	HashPass string
@@ -73,6 +74,9 @@ func (db DB) PutUser(name, putUname string, u *User) error {
 func (db DB) RmUser(name, toDelete string) error {
 	if name != "root" && name != toDelete {
 		return ErrForbiddenRoot
+	}
+	if toDelete == "root" {
+		return ErrCannotDeleteRoot
 	}
 	return db.Update(func(tx *bolt.Tx) error {
 		users := tx.Bucket(userBucket)

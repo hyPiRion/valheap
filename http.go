@@ -77,7 +77,7 @@ func (db DB) HttpHandleUser(w http.ResponseWriter, r *http.Request) {
 	case "DELETE":
 		err := db.RmUser(uname, name)
 		switch err {
-		case ErrForbiddenRoot:
+		case ErrForbiddenRoot, ErrCannotDeleteRoot:
 			http.Error(w, err.Error(), http.StatusForbidden)
 		case ErrUserNotExists:
 			http.Error(w, "The user does not exists", http.StatusConflict)
