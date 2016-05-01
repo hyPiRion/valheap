@@ -17,6 +17,10 @@ type JsonOutput struct {
 }
 
 func AddUser(username string) {
+	if username == cfg.Username {
+		ChgPwd()
+		return
+	}
 	u, err := url.Parse(cfg.Server)
 	if err != nil {
 		panic(err)
