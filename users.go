@@ -80,11 +80,11 @@ func (db DB) RmUser(name, toDelete string) error {
 	}
 	return db.Update(func(tx *bolt.Tx) error {
 		users := tx.Bucket(userBucket)
-		uinfo := users.Get([]byte(name))
+		uinfo := users.Get([]byte(toDelete))
 		if uinfo == nil {
 			return ErrUserNotExists
 		}
-		return users.Delete([]byte(name))
+		return users.Delete([]byte(toDelete))
 	})
 }
 
