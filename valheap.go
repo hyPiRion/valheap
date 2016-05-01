@@ -1,69 +1,58 @@
 package main
 
 import (
-	"errors"
+	"flag"
+	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
 
-type DB struct {
-	*bolt.DB
-}
-
-var (
-	userBucket      = []byte(`users`)
-	valueBucket     = []byte(`values`)
-	ErrUnauthorized = errors.New("Unauthorized")
-)
-
-func (db DB) Get(key string) (val []byte, err error) {
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(valueBucket)
-		val = bucket.Get([]byte(key))
-		return nil
-	})
-	return
-}
-
-func (db DB) Put(key string, val []byte) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket(valueBucket)
-		return bucket.Put([]byte(key), val)
-	})
-	return
-}
-
-func EnsureBuckets(db *bolt.DB) {
-	err := db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists(valueBucket)
-		if err != nil {
-			return err
-		}
-		users, err := tx.CreateBucketIfNotExists(userBucket)
-		if err != nil {
-			return err
-		}
-		rootData := users.Get([]byte(`root`))
-		if rootData == nil {
-			log.Println("Setting up root user (password 'toor', replace it immediately)")
-			err = users.Put([]byte(`root`), DefaultRoot.Marshal())
-		}
-		return err
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
-	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	var dbpath, certFile, keyFile string
+	var help bool
+	var port int
+	flag.StringVar(&dbpath, "db", "valheap.db", "Path to the bolt DB file to use")
+	flag.IntVar(&port, "port", 8080, "The port to listen on HTTP requests")
+	flag.BoolVar(&help, "help", false, "Prints this help message")
+	flag.StringVar(&certFile, "cert", "", "The path to the TLS certificate to use")
+	flag.StringVar(&keyFile, "key", "", "The path to the TLS private key to use")
+	flag.Parse()
+
+	if help {
+		fmt.Println(`Valheap is an HTTP key/value storage with basic auth
+
+Usage: ./valheap [options]
+
+Where options may be:`)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if (certFile == "" || keyFile == "") && keyFile != certFile {
+		fmt.Fprintln(os.Stderr, "Both -cert and -key must be specified to use TLS")
+		os.Exit(1)
+	}
+
+	log.Infof("Opening database file %s", dbpath)
+	db, err := bolt.Open(dbpath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 	EnsureBuckets(db)
-	log.Fatal(http.ListenAndServe(":8080", DB{db}.ServeMux()))
+
+	addr := fmt.Sprintf(":%d", port)
+
+	log.Infof("Now listening on port %d", port)
+	if certFile != "" {
+		err = http.ListenAndServeTLS(addr, certFile, keyFile, DB{db}.ServeMux())
+	} else {
+		log.Warning("Not using TLS. If you want to be secure, either enable it or put this behind nginx or something similar")
+		err = http.ListenAndServe(addr, DB{db}.ServeMux())
+	}
+	log.Fatal(err)
 }
