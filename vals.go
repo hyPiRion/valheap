@@ -34,6 +34,14 @@ func (db DB) Put(key string, val []byte) (err error) {
 	return
 }
 
+func (db DB) Delete(key string) (err error) {
+	err = db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(valueBucket)
+		return bucket.Delete([]byte(key))
+	})
+	return
+}
+
 func EnsureBuckets(db *bolt.DB) {
 	err := db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists(valueBucket)

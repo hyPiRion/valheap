@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 func (db DB) ServeMux() *http.ServeMux {
 	sm := http.NewServeMux()
 	sm.HandleFunc("/user/", db.HttpAuth(db.HttpHandleUser))
-	sm.HandleFunc("/val/", db.HttpAuth(db.HttpGetPut))
+	sm.HandleFunc("/val/", db.HttpAuth(db.HttpVals))
 	sm.HandleFunc("/", db.HttpAuth(http.NotFound))
 	return sm
 }
@@ -93,7 +94,7 @@ func (db DB) HttpHandleUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (db DB) HttpGetPut(w http.ResponseWriter, r *http.Request) {
+func (db DB) HttpVals(w http.ResponseWriter, r *http.Request) {
 	keyStr := strings.TrimPrefix(r.URL.Path, "/val/")
 	switch r.Method {
 	case "PUT":
@@ -129,6 +130,14 @@ func (db DB) HttpGetPut(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Errorf("Unable to send body to request: %s", err)
 		}
+	case "DELETE":
+		err := db.Delete(keyStr)
+		if err != nil {
+			log.Errorf("Unable to delete key %q: %s", keyStr, err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "Key %s deleted\n", keyStr)
 	default:
 		http.NotFound(w, r)
 	}
