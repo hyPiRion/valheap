@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 
@@ -114,6 +115,27 @@ func makeInit() {
 	if err != nil {
 		fmt.Printf("Error reading password: %s\n", err)
 		os.Exit(1)
+	}
+
+	// verify that information is correct before storing it.
+	req, err := http.NewRequest("GET", server, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.SetBasicAuth(uname, string(pass))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("Unable to verify correct info: %s\n", err)
+		os.Exit(1)
+	}
+	switch resp.StatusCode {
+	case http.StatusUnauthorized:
+		fmt.Println("Incorrect username/password, please try again")
+		os.Exit(1)
+	case http.StatusNotFound:
+	default:
+		fmt.Printf("Unexpected error code from server: %d\n", resp.StatusCode)
 	}
 
 	path := configPath()
