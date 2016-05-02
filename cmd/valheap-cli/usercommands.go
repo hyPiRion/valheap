@@ -25,7 +25,7 @@ func AddUser(username string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/user/%s", u.Path, url.QueryEscape(username))
+	u.Path = fmt.Sprintf("%s/user/%s", u.Path, username)
 
 	fmt.Printf("Enter password for %s: ", username)
 	pass, err := gopass.GetPasswd()
@@ -67,7 +67,7 @@ func RmUser(username string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/user/%s", u.Path, url.QueryEscape(username))
+	u.Path = fmt.Sprintf("%s/user/%s", u.Path, username)
 
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
@@ -97,7 +97,7 @@ func ChgPwd() {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/user/%s", u.Path, url.QueryEscape(cfg.Username))
+	u.Path = fmt.Sprintf("%s/user/%s", u.Path, cfg.Username)
 
 	fmt.Print("Enter new password: ")
 	pass, err := gopass.GetPasswd()

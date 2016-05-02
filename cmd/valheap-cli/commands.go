@@ -13,7 +13,7 @@ func Get(val string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/val/%s", u.Path, url.QueryEscape(val))
+	u.Path = fmt.Sprintf("%s/val/%s", u.Path, val)
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -46,7 +46,7 @@ func Put(val string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/val/%s", u.Path, url.QueryEscape(val))
+	u.Path = fmt.Sprintf("%s/val/%s", u.Path, val)
 
 	req, err := http.NewRequest("PUT", u.String(), os.Stdin)
 	if err != nil {
@@ -75,7 +75,7 @@ func Delete(val string) {
 	if err != nil {
 		panic(err)
 	}
-	u.Path = fmt.Sprintf("%s/val/%s", u.Path, url.QueryEscape(val))
+	u.Path = fmt.Sprintf("%s/val/%s", u.Path, val)
 
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
