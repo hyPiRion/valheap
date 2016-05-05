@@ -91,6 +91,24 @@ There are no limitations to a name of a key, just beware of URL encoding.
 `valheap-cli will` url encode keys, but only the things that have to be encoded.
 For example, although 
 
+### Listing Keys
+
+By using the `list` command, you can list all the keys in the project, or just a
+subset by specifying a prefix. The keys are separated by a newline, but be aware
+that keys themselves contain newlines. There is no attempt at handling this on
+the client nor the server:
+
+```shell
+$ valheap-cli list
+bar
+foo
+$ valheap-cli list f
+foo
+$ valheap-cli list dev
+# Nothing to be printed
+$
+```
+
 ### Adding and Removing Users
 
 Only the root user can add and remove arbitrary users, and root cannot be
@@ -118,11 +136,18 @@ Enter username: fatimah
 Enter password:
 ```
 
-The root user can also remove users by calling `rmuser`:
+The root user can also remove users by calling `rmuser`, or list them:
 
 ```shell
 $ valheap-cli rmuser benjamin
 User removed
+```
+
+```shell
+$ valheap-cli listusers
+fatimah
+root
+trevor
 ```
 
 ## Deploying
