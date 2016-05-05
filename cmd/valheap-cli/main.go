@@ -24,8 +24,9 @@ put        Put/update a key to valheap from stdin
 delete     Deletes a key from valheap
 list       Lists all keys in valheap with the provided prefix
 adduser    Adds a user to valheap (must be root)
-rmuser     Removes a user from valheap (must be root)
-listusers  Lists all users in valheap (must be root)
+rmuser     Removes a user from valheap (root only)
+listusers  Lists all users in valheap (root only)
+backup     Backups the database to the provided file (root only)
 
 The environment variable VALHEAP_CLI_FILE can be set to override the
 default valheap file location, which is $HOME/.valheap-cli.json.
@@ -44,6 +45,7 @@ func init() {
 		"chgpwd":    Get, // dummy
 		"list":      List,
 		"listusers": List,
+		"backup":    Backup,
 	}
 }
 

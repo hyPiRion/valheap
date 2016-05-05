@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -17,6 +18,7 @@ func (db DB) ServeMux() *http.ServeMux {
 	sm.HandleFunc("/val/", db.HttpAuth(db.HttpVals))
 	sm.HandleFunc("/listvals", db.HttpAuth(db.HttpListVals))
 	sm.HandleFunc("/listusers", db.HttpAuth(db.HttpListUsers))
+	sm.HandleFunc("/backup", db.HttpAuth(db.HttpBackup))
 	sm.HandleFunc("/", db.HttpAuth(http.NotFound))
 	return sm
 }
@@ -195,5 +197,22 @@ func (db DB) HttpVals(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Key %s deleted\n", keyStr)
 	default:
 		http.NotFound(w, r)
+	}
+}
+
+func (db DB) HttpBackup(w http.ResponseWriter, r *http.Request) {
+	uname, _, _ := r.BasicAuth()
+	if uname != "root" {
+		http.Error(w, ErrForbiddenRoot.Error(), http.StatusForbidden)
+		return
+	}
+	err := db.View(func(tx *bolt.Tx) error {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
+		_, err := tx.WriteTo(w)
+		return err
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

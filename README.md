@@ -150,6 +150,19 @@ root
 trevor
 ```
 
+### Performing Backups
+
+Root users can perform backups via the backup command. A nonexisting file path
+must be provided to store the file:
+
+```shell
+$ valheap-cli backup mybackup.db
+Backup saved in mybackup.db
+```
+
+The backup will be stored with the permissions 0600 (only you can read or write
+the file)
+
 ## Deploying
 
 TODO

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -137,4 +138,50 @@ func List(val string) {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func backup(path string) int {
+	u, err := url.Parse(cfg.Server)
+	if err != nil {
+		panic(err)
+	}
+	u.Path += "/backup"
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic(err)
+	}
+	req.SetBasicAuth(cfg.Username, string(cfg.Password))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	if resp.StatusCode != 200 {
+		io.Copy(os.Stderr, resp.Body)
+		return 1
+	}
+
+	// Open a new file, must not already exist
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Println("Backup saved in file", path)
+	return 0
+}
+
+// Wrap backup to ensure defer call happens
+func Backup(path string) {
+	os.Exit(backup(path))
 }
