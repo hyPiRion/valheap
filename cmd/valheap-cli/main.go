@@ -17,13 +17,15 @@ const banner = `%s is a tool to talk to a valheap server easily
 
 The following commands are available:
 
-init    - (re)Set up your configuration
-chgwpwd - Change your valheap password
-get     - Get a key from valheap and print to stdout
-put     - Put/update a key to valheap from stdin
-delete  - Deletes a key from valheap
-adduser - Adds a user to valheap (must be root)
-rmuser  - Removes a user from valheap (must be root)
+init       (re)Set up your configuration
+chgwpwd    Change your valheap password
+get        Get a key from valheap and print to stdout
+put        Put/update a key to valheap from stdin
+delete     Deletes a key from valheap
+list       Lists all keys in valheap with the provided prefix
+adduser    Adds a user to valheap (must be root)
+rmuser     Removes a user from valheap (must be root)
+listusers  Lists all users in valheap (must be root)
 
 The environment variable VALHEAP_CLI_FILE can be set to override the
 default valheap file location, which is $HOME/.valheap-cli.json.
@@ -33,13 +35,15 @@ var knownCommand map[string]func(string)
 
 func init() {
 	knownCommand = map[string]func(string){
-		"init":    Get, // yeah yeah
-		"get":     Get,
-		"put":     Put,
-		"delete":  Delete,
-		"adduser": AddUser,
-		"rmuser":  RmUser,
-		"chgpwd":  Get, // dummy
+		"init":      Get, // yeah yeah
+		"get":       Get,
+		"put":       Put,
+		"delete":    Delete,
+		"adduser":   AddUser,
+		"rmuser":    RmUser,
+		"chgpwd":    Get, // dummy
+		"list":      List,
+		"listusers": List,
 	}
 }
 
@@ -162,6 +166,7 @@ func makeInit() {
 }
 
 func main() {
+	// Well, this is an interesting piece of spaghetti
 	if len(os.Args) == 1 || knownCommand[os.Args[1]] == nil {
 		fmt.Printf(banner, os.Args[0])
 		os.Exit(1)
@@ -175,6 +180,22 @@ func main() {
 	}
 	if os.Args[1] == "chgpwd" {
 		ChgPwd()
+		os.Exit(0)
+	}
+	if os.Args[1] == "listusers" {
+		ListUsers()
+		os.Exit(0)
+	}
+	if os.Args[1] == "list" {
+		if len(os.Args) > 3 {
+			fmt.Fprintf(os.Stderr, "%s expects 0 or 1 argument in\n", os.Args[1])
+			os.Exit(1)
+		}
+		prefix := ""
+		if len(os.Args) == 3 {
+			prefix = os.Args[2]
+		}
+		List(prefix)
 		os.Exit(0)
 	}
 	if len(os.Args) != 3 {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 
 	log "github.com/Sirupsen/logrus"
@@ -17,10 +18,19 @@ var (
 	ErrUnauthorized = errors.New("Unauthorized")
 )
 
+func copyBytes(bs []byte) []byte {
+	if bs == nil {
+		return nil
+	}
+	ret := make([]byte, len(bs), len(bs))
+	copy(ret, bs)
+	return ret
+}
+
 func (db DB) Get(key string) (val []byte, err error) {
 	err = db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(valueBucket)
-		val = bucket.Get([]byte(key))
+		val = copyBytes(bucket.Get([]byte(key)))
 		return nil
 	})
 	return
@@ -38,6 +48,18 @@ func (db DB) Delete(key string) (err error) {
 	err = db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(valueBucket)
 		return bucket.Delete([]byte(key))
+	})
+	return
+}
+
+func (db DB) List(prefixString string) (keys [][]byte, err error) {
+	err = db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(valueBucket).Cursor()
+		prefix := []byte(prefixString)
+		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+			keys = append(keys, copyBytes(k))
+		}
+		return nil
 	})
 	return
 }

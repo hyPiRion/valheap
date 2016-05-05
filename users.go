@@ -88,6 +88,20 @@ func (db DB) RmUser(name, toDelete string) error {
 	})
 }
 
+func (db DB) ListUsers(name string) (keys [][]byte, err error) {
+	if name != "root" {
+		return nil, ErrForbiddenRoot
+	}
+	err = db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(userBucket).Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			keys = append(keys, copyBytes(k))
+		}
+		return nil
+	})
+	return
+}
+
 func AuthorizeUser(tx *bolt.Tx, name, pass string) error {
 	users := tx.Bucket(userBucket)
 	udata := users.Get([]byte(name))

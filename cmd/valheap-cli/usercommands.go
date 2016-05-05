@@ -151,3 +151,36 @@ func ChgPwd() {
 	os.Exit(0)
 	os.Stdout.Write(body)
 }
+
+func ListUsers() {
+	u, err := url.Parse(cfg.Server)
+	if err != nil {
+		panic(err)
+	}
+	u.Path = fmt.Sprintf("%s/listusers", u.Path)
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic(err)
+	}
+	req.SetBasicAuth(cfg.Username, string(cfg.Password))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if resp.StatusCode != 200 {
+		os.Stderr.Write(body)
+		os.Exit(1)
+	}
+	_, err = os.Stdout.Write(body)
+	if err != nil {
+		os.Exit(1)
+	}
+}

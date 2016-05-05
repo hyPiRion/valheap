@@ -15,6 +15,8 @@ func (db DB) ServeMux() *http.ServeMux {
 	sm := http.NewServeMux()
 	sm.HandleFunc("/user/", db.HttpAuth(db.HttpHandleUser))
 	sm.HandleFunc("/val/", db.HttpAuth(db.HttpVals))
+	sm.HandleFunc("/listvals", db.HttpAuth(db.HttpListVals))
+	sm.HandleFunc("/listusers", db.HttpAuth(db.HttpListUsers))
 	sm.HandleFunc("/", db.HttpAuth(http.NotFound))
 	return sm
 }
@@ -91,6 +93,59 @@ func (db DB) HttpHandleUser(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 		return
+	}
+}
+
+func (db DB) HttpListUsers(w http.ResponseWriter, r *http.Request) {
+	uname, _, _ := r.BasicAuth()
+	switch r.Method {
+	case "GET":
+		keys, err := db.ListUsers(uname)
+		switch err {
+		case ErrForbiddenRoot:
+			http.Error(w, err.Error(), http.StatusForbidden)
+		default:
+			log.Errorf("Unable to list users: %s", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		case nil:
+			for _, key := range keys {
+				_, err := w.Write(key)
+				if err == nil {
+					_, err = w.Write([]byte{'\n'})
+				}
+				if err != nil {
+					log.Errorf("Unable to send body to request: %s", err)
+					return
+				}
+			}
+		}
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (db DB) HttpListVals(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		prefix := r.URL.Query().Get("prefix")
+		keys, err := db.List(prefix)
+		if err != nil {
+			log.Errorf("Unable to list keys with prefix %q: %s", prefix, err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		for _, key := range keys {
+			_, err := w.Write(key)
+			if err == nil {
+				_, err = w.Write([]byte{'\n'})
+			}
+			if err != nil {
+				log.Errorf("Unable to send body to request: %s", err)
+				return
+			}
+		}
+	default:
+		http.NotFound(w, r)
 	}
 }
 
