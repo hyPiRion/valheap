@@ -10,10 +10,11 @@ It's **not** intended to be
 * Extremely secure – If someone is able to get into the machine valheap runs on,
   chances are everything in the store has been compromised. (But perhaps you
   have bigger issues if someone is able to get into it)
-* A database – You can only get, put and delete values. You cannot iterate over
-  them, list them, do queries on them and so on.
+* A database – You can only get, put, delete and list values. You cannot iterate
+  over them, do queries on them and so on, without doing it manually and
+  non-transactionally.
 * Efficient – You should probably not hook this up to systems with "millions of
-  requests per second". (But you could try!)
+  requests per second" (but you could try if you want to).
 * Used to store big things. The server should be able to keep the thing you
   store in memory.
 
