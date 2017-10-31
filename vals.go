@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"errors"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	log "github.com/sirupsen/logrus"
 )
 
 type DB struct {
